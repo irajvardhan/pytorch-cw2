@@ -730,7 +730,7 @@ if __name__ == '__main__':
     intr_model.cuda()
 
 
-    directory = './data/fmnist'
+    directory = './data/'+dataset
 
     IS_DATA_READY = True
     assert(IS_DATA_READY == True)
@@ -746,7 +746,7 @@ if __name__ == '__main__':
 
 
     # Simple dataset. Only save path to image and load it and transform to tensor when call __getitem__.
-    filepath = './data/fmnist/'
+    filepath = './data/'+dataset
     train_set = CustomDS(filepath, train=True)
     test_set = CustomDS(filepath, train=False)
 
@@ -815,7 +815,7 @@ if __name__ == '__main__':
     device = torch.device("cuda" if (use_cuda and torch.cuda.is_available()) else "cpu")
 
     # # Initialize the network
-    pretrained_model = "model/fmnist/v2/fmnist_cnn.pt"
+    pretrained_model = "model"+dataset+"/v2/" + dataset + "_cnn.pt"
     # Initialize the network
     model = Net(model_layers, num_classes=NUM_CLASSES).cuda()
 
@@ -830,7 +830,7 @@ if __name__ == '__main__':
 
     # # Initialize the explanation model
     NUM_CLASSES_EXP = 2 
-    model_dir = 'data/defender/fmnist/exp_model_data/for_target/' + str(target_class) + '/model'
+    model_dir = 'data/defender/' + dataset + '/exp_model_data/for_target/' + str(target_class) + '/model'
     pretrained_exp_model = model_dir+"/exp_model.pt"
 
     exp_model = Net(model_layers, num_classes=NUM_CLASSES_EXP).cuda()
