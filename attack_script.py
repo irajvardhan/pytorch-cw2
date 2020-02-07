@@ -815,7 +815,7 @@ if __name__ == '__main__':
     device = torch.device("cuda" if (use_cuda and torch.cuda.is_available()) else "cpu")
 
     # # Initialize the network
-    pretrained_model = "model"+dataset+"/v2/" + dataset + "_cnn.pt"
+    pretrained_model = "model/"+dataset+"/v2/" + dataset + "_cnn.pt"
     # Initialize the network
     model = Net(model_layers, num_classes=NUM_CLASSES).cuda()
 
@@ -869,6 +869,8 @@ if __name__ == '__main__':
 
     best_l2s = []
 
+    computed_l2s = []
+
     input_label = torch.from_numpy(np.array([desired_source_label]*BATCH_SIZE))
 
     while i < args.batch_size*args.thresh_iterations:
@@ -917,13 +919,30 @@ if __name__ == '__main__':
         result_np = result.cpu().numpy()
         success_record.extend(result_np)
 
+        # compute l2 between input and resulting images
+        img_clean = input_tensor.detach().cpu().numpy()
+        img_adv = adversarial_img
+
+        batch_l2s = []
+        for index in range(img_clean.shape[0]):
+            clean = img_clean[index][0]
+            adv = img_adv[index][0]
+
+            #normalize adv
+            adv = (adv - np.min(adv))/(np.max(adv)-np.min(adv))
+
+            dist = np.linalg.norm(clean-adv)
+            batch_l2s.append(dist)
+        computed_l2s.extend(batch_l2s)
+
+
         # log results
         success_record_npy = np.array(success_record)
         best_l2s_npy = np.array(best_l2s)
         ind_succ = np.where(success_record_npy==True)[0]
         succ_l2s = best_l2s_npy[ind_succ]
         print('succ:{} fail:{} mean L2 of succ attacks:{}'.format(succ_l2s.shape[0], success_record_npy.shape[0] - succ_l2s.shape[0], np.mean(succ_l2s)))
-
+        print('computed l2s:',batch_l2s)
         folderpath = 'results/adaptive/' + dataset + '/' + str(target_class)
 
         if not os.path.exists(folderpath):
@@ -933,7 +952,7 @@ if __name__ == '__main__':
         print('saving to ',folderpath)
         np.save(folderpath+'/batch_' + str(iterations) + '_result.npy',result_np)
         np.save(folderpath+'/batch_' + str(iterations) + '_best_l2s.npy',best_l2)
-
+        np.save(folderpath+'/batch_' + str(iterations) + '_batch_l2s.npy',batch_l2s)
         iterations += 1
         i += BATCH_SIZE
         if iterations == thresh_on_iterations:
@@ -946,5 +965,5 @@ if __name__ == '__main__':
     # save overall result
     np.save(folderpath+'/success_record.npy',success_record)
     np.save(folderpath+'/best_l2s.npy',best_l2s)
-
+    np.save(folderpath+'/computed_l2s.npy',computed_l2s)
     
